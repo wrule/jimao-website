@@ -8,6 +8,7 @@ import {
 import type { LinksFunction } from "@remix-run/cloudflare";
 
 import "./tailwind.css";
+import Background from "./components/three/Background";
 
 export const links: LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -33,6 +34,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         {children}
+        <Background />
         <ScrollRestoration />
         <Scripts />
       </body>
