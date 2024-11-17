@@ -15,12 +15,18 @@
     "cf-typegen": "wrangler types"
   },
   "dependencies": {
+    "@react-three/drei": "^9.117.0",
+    "@react-three/fiber": "^8.17.10",
+    "@react-three/gltfjsx": "^4.3.4",
+    "@react-three/postprocessing": "^2.16.3",
+    "@react-three/rapier": "^1.5.0",
     "@remix-run/cloudflare": "^2.14.0",
     "@remix-run/react": "^2.14.0",
     "@remix-run/server-runtime": "^2.14.0",
     "isbot": "^4.1.0",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "three": "^0.170.0"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20241112.0",
