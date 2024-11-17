@@ -1,152 +1,168 @@
 // app/components/three/Background.tsx
+import { useRef, useMemo } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { useRef, useState, useMemo } from 'react';
-import * as THREE from 'three';
+import { EffectComposer, Bloom, Noise } from '@react-three/postprocessing';
+import { Vector3, Color } from 'three';
+import { PerspectiveCamera } from '@react-three/drei';
 
-// 单个硬币组件
-function Coin({ position }: { position: [number, number, number] }) {
-  const meshRef = useRef<THREE.Mesh>(null);
-  const [fallen, setFallen] = useState(false);
-  
-  const coinGeometry = useMemo(() => new THREE.CylinderGeometry(0.4, 0.4, 0.1, 32), []);
-  
-  useFrame(() => {
-    if (!meshRef.current || fallen) return;
-    
-    // 硬币掉落的物理模拟
-    meshRef.current.position.y -= 0.05;
-    meshRef.current.rotation.x += 0.1;
-    
-    if (meshRef.current.position.y < -8) {
-      setFallen(true);
-    }
-  });
-
-  return (
-    <mesh
-      ref={meshRef}
-      position={position}
-      rotation={[Math.PI / 2, 0, 0]}
-    >
-      <primitive object={coinGeometry} attach="geometry" />
-      <meshStandardMaterial
-        color="#FFD700"
-        metalness={1}
-        roughness={0.2}
-      />
-    </mesh>
+// 抽象波浪场景
+function AbstractWaves() {
+  const mesh = useRef<any>();
+  const uniforms = useMemo(
+    () => ({
+      uTime: { value: 0 },
+      uColor: { value: new Color('#002FA7') },
+    }),
+    []
   );
-}
 
-// 推币器组件
-function Pusher() {
-  const pusherRef = useRef<THREE.Mesh>(null);
-  
   useFrame((state) => {
-    if (pusherRef.current) {
-      // 推币器往复运动
-      pusherRef.current.position.z = Math.sin(state.clock.elapsedTime * 2) * 2;
+    const time = state.clock.getElapsedTime();
+    uniforms.uTime.value = time;
+    
+    if (mesh.current) {
+      mesh.current.rotation.x = Math.sin(time * 0.1) * 0.2;
+      mesh.current.rotation.y = Math.sin(time * 0.15) * 0.2;
     }
   });
 
+  const vertexShader = `
+    varying vec2 vUv;
+    varying float vElevation;
+    uniform float uTime;
+
+    void main() {
+      vUv = uv;
+      
+      vec4 modelPosition = modelMatrix * vec4(position, 1.0);
+      
+      float elevation = sin(modelPosition.x * 2.0 + uTime * 0.5) * 
+                       sin(modelPosition.y * 2.0 + uTime * 0.5) * 0.5;
+                       
+      modelPosition.z += elevation;
+      vElevation = elevation;
+
+      gl_Position = projectionMatrix * viewMatrix * modelPosition;
+    }
+  `;
+
+  const fragmentShader = `
+    uniform vec3 uColor;
+    varying float vElevation;
+    
+    void main() {
+      float intensity = vElevation * 2.0 + 0.8;
+      vec3 color = mix(uColor, vec3(1.0), intensity * 0.2);
+      gl_FragColor = vec4(color, 1.0);
+    }
+  `;
+
   return (
-    <mesh
-      ref={pusherRef}
-      position={[0, 0, 4]}
-    >
-      <boxGeometry args={[8, 0.5, 1]} />
-      <meshStandardMaterial
-        color="#404040"
-        metalness={0.5}
-        roughness={0.5}
+    <mesh ref={mesh} rotation={[-Math.PI / 4, 0, 0]}>
+      <planeGeometry args={[15, 15, 128, 128]} />
+      <shaderMaterial
+        vertexShader={vertexShader}
+        fragmentShader={fragmentShader}
+        uniforms={uniforms}
       />
     </mesh>
   );
 }
 
-// 主场景组件
-function CoinPusherScene() {
-  const [coins, setCoins] = useState<Array<[number, number, number]>>([]);
-  
-  // 定期添加新硬币
-  useFrame(() => {
-    if (Math.random() < 0.02) {
-      const x = (Math.random() - 0.5) * 6;
-      setCoins(prev => [...prev, [x, 5, 3]]);
-      
-      // 限制硬币数量
-      if (coins.length > 50) {
-        setCoins(prev => prev.slice(1));
-      }
+// 发光环组件
+function LightRings() {
+  const group = useRef<any>();
+
+  useFrame((state) => {
+    const time = state.clock.getElapsedTime();
+    if (group.current) {
+      group.current.rotation.z = time * 0.1;
+      group.current.rotation.x = Math.sin(time * 0.2) * 0.1;
     }
   });
 
   return (
-    <group>
-      {/* 推币台面 */}
-      <mesh rotation={[-Math.PI / 12, 0, 0]} position={[0, -2, 0]}>
-        <boxGeometry args={[10, 0.2, 8]} />
-        <meshStandardMaterial
-          color="#2C3E50"
-          metalness={0.3}
-          roughness={0.7}
-        />
-      </mesh>
-
-      {/* 侧边挡板 */}
-      <mesh position={[-5, -2, 0]}>
-        <boxGeometry args={[0.2, 4, 8]} />
-        <meshStandardMaterial color="#2C3E50" />
-      </mesh>
-      <mesh position={[5, -2, 0]}>
-        <boxGeometry args={[0.2, 4, 8]} />
-        <meshStandardMaterial color="#2C3E50" />
-      </mesh>
-
-      {/* 推币器 */}
-      <Pusher />
-
-      {/* 硬币 */}
-      {coins.map((position, index) => (
-        <Coin key={index} position={position} />
+    <group ref={group}>
+      {[1, 2, 3].map((ring, i) => (
+        <mesh key={ring} position={[0, 0, -i * 0.5]}>
+          <torusGeometry args={[2 + i * 0.8, 0.05, 16, 100]} />
+          <meshStandardMaterial
+            color="#002FA7"
+            emissive="#002FA7"
+            emissiveIntensity={0.5}
+            transparent
+            opacity={0.7}
+          />
+        </mesh>
       ))}
     </group>
   );
 }
 
-const Background = () => {
+// 大气效果组件
+function Atmosphere() {
+  const mesh = useRef<any>();
+
+  useFrame((state) => {
+    const time = state.clock.getElapsedTime();
+    if (mesh.current) {
+      mesh.current.rotation.z = time * 0.05;
+    }
+  });
+
+  return (
+    <mesh ref={mesh}>
+      <sphereGeometry args={[10, 32, 32]} />
+      <meshStandardMaterial
+        color="#002FA7"
+        transparent
+        opacity={0.1}
+        side={2}
+      />
+    </mesh>
+  );
+}
+
+// 相机控制
+function CameraRig() {
+  useFrame((state) => {
+    const time = state.clock.getElapsedTime();
+    state.camera.position.x = Math.sin(time * 0.1) * 2;
+    state.camera.position.y = Math.cos(time * 0.1) * 2;
+    state.camera.lookAt(0, 0, 0);
+  });
+
+  return null;
+}
+
+// 主背景组件
+export default function Background() {
   return (
     <div className="fixed inset-0 -z-10">
-      <Canvas
-        camera={{ position: [0, 5, 15], fov: 45 }}
-        gl={{ antialias: true }}
-      >
-        {/* 环境光和主光源 */}
+      <Canvas>
+        <color attach="background" args={['#002FA7']} />
+        <fog attach="fog" args={['#002FA7', 5, 15]} />
+        
+        <PerspectiveCamera makeDefault position={[0, 0, 8]} fov={75} />
+        
         <ambientLight intensity={0.5} />
-        <directionalLight
-          position={[10, 10, 10]}
-          intensity={1}
-          castShadow
-        />
-        <spotLight
-          position={[0, 10, 0]}
-          intensity={0.8}
-          angle={0.5}
-          penumbra={1}
-        />
-
-        {/* 赌场氛围灯光 */}
-        <pointLight position={[-5, 5, 5]} intensity={0.5} color="#ff0000" />
-        <pointLight position={[5, 5, 5]} intensity={0.5} color="#0000ff" />
-
-        <CoinPusherScene />
-
-        {/* 背景颜色 */}
-        <color attach="background" args={['#1a1a1a']} />
-        <fog attach="fog" args={['#1a1a1a', 15, 25]} />
+        <pointLight position={[10, 10, 10]} intensity={1} />
+        
+        <AbstractWaves />
+        <LightRings />
+        <Atmosphere />
+        <CameraRig />
+        
+        <EffectComposer>
+          <Bloom
+            intensity={1}
+            luminanceThreshold={0.2}
+            luminanceSmoothing={0.9}
+            height={300}
+          />
+          <Noise opacity={0.02} />
+        </EffectComposer>
       </Canvas>
     </div>
   );
-};
-
-export default Background;
+}
