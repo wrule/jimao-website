@@ -45,10 +45,10 @@ export default function Index() {
   }, [searchQuery]);
 
   return (
-    <div className="text-white min-h-screen">
+    <div className="text-white min-h-screen will-change-transform">
       <div className="max-w-screen-xl mx-auto p-8 flex gap-8 h-screen">
         {/* 左侧面板 */}
-        <div className="w-80 flex-shrink-0 flex flex-col">
+        <div className="w-80 flex-shrink-0 flex flex-col will-change-transform">
           {/* 搜索框 */}
           <div className="mb-8">
             <div className="relative">
@@ -73,18 +73,27 @@ export default function Index() {
           <h2 className="text-2xl font-light mb-8 border-b border-white/20 pb-4">
             Articles
           </h2>
-          <div className="space-y-2 overflow-y-auto flex-grow [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+          <div 
+            className="space-y-2 overflow-y-auto flex-grow [&::-webkit-scrollbar]:hidden 
+              [-ms-overflow-style:none] [scrollbar-width:none] transform-gpu"
+          >
             {filteredArticles.map((article) => (
               <article 
                 key={article.id}
-                className={`cursor-pointer py-2 transition-colors duration-300`}
+                className="cursor-pointer py-2 transform-gpu will-change-transform"
                 onClick={() => setSelectedArticle(article)}
               >
-                <div className={`px-4 transition-all duration-300 ${
-                  selectedArticle?.id === article.id 
-                    ? 'text-white border-b border-white pb-2' 
-                    : 'text-white/70 hover:text-white/90 border-b border-transparent pb-2'
-                }`}>
+                <div 
+                  className={`px-4 transform-gpu ${
+                    selectedArticle?.id === article.id 
+                      ? 'text-white border-b border-white pb-2' 
+                      : 'text-white/70 hover:text-white/90 border-b border-transparent pb-2'
+                  }`}
+                  style={{
+                    transform: 'translate3d(0,0,0)',
+                    backfaceVisibility: 'hidden'
+                  }}
+                >
                   <h3 className="text-lg mb-1">{article.title}</h3>
                   <time className={`text-sm ${
                     selectedArticle?.id === article.id 
@@ -98,14 +107,21 @@ export default function Index() {
         </div>
 
         {/* 文章内容 */}
-        <div className="flex-grow flex">
+        <div className="flex-grow flex transform-gpu will-change-transform">
           {selectedArticle ? (
             <div className="w-full h-full relative">
               <div 
                 className="absolute inset-0 backdrop-blur-md bg-white/5 rounded-xl 
-                  overflow-hidden transition-all duration-300"
+                  overflow-hidden transform-gpu"
+                style={{
+                  transform: 'translate3d(0,0,0)',
+                  backfaceVisibility: 'hidden'
+                }}
               >
-                <div className="h-full overflow-y-auto p-8 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                <div 
+                  className="h-full overflow-y-auto p-8 [&::-webkit-scrollbar]:hidden 
+                    [-ms-overflow-style:none] [scrollbar-width:none] transform-gpu"
+                >
                   <h1 className="text-3xl font-light mb-4">{selectedArticle.title}</h1>
                   <time className="text-sm opacity-50 block mb-8">{selectedArticle.date}</time>
                   <div className="leading-relaxed opacity-90 whitespace-pre-line">
