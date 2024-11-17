@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import { MeshTransmissionMaterial, Float } from '@react-three/drei';
 
 function Particles() {
-  const count = 800; // 增加粒子数量
+  const count = 640; // 减少20%粒子数量 (800 * 0.8 = 640)
   const particlesRef = useRef<THREE.Points>(null);
   
   const positions = new Float32Array(count * 3);
@@ -13,22 +13,22 @@ function Particles() {
   for (let i = 0; i < count; i++) {
     const theta = THREE.MathUtils.randFloatSpread(360);
     const phi = THREE.MathUtils.randFloatSpread(360);
-    const r = 2.5 + Math.random() * 4; // 扩大粒子分布范围
+    const r = 2.5 + Math.random() * 4;
 
     positions[i * 3] = r * Math.sin(theta) * Math.cos(phi);
     positions[i * 3 + 1] = r * Math.sin(theta) * Math.sin(phi);
     positions[i * 3 + 2] = r * Math.cos(theta);
 
     const shade = Math.random();
-    colors[i * 3] = 0.9 + shade * 0.1;     // 更亮的蓝白色
+    colors[i * 3] = 0.9 + shade * 0.1;
     colors[i * 3 + 1] = 0.95 + shade * 0.05;
     colors[i * 3 + 2] = 1;
   }
 
   useFrame((state) => {
     if (particlesRef.current) {
-      particlesRef.current.rotation.y = state.clock.getElapsedTime() * 0.03; // 降低旋转速度
-      particlesRef.current.rotation.x = state.clock.getElapsedTime() * 0.01; // 添加微小的X轴旋转
+      particlesRef.current.rotation.y = state.clock.getElapsedTime() * 0.03;
+      particlesRef.current.rotation.x = state.clock.getElapsedTime() * 0.01;
     }
   });
 
@@ -49,12 +49,12 @@ function Particles() {
         />
       </bufferGeometry>
       <pointsMaterial
-        size={0.015} // 调整粒子大小
+        size={0.015}
         vertexColors
         transparent
-        opacity={0.6} // 提高透明度
+        opacity={0.6}
         sizeAttenuation={true}
-        blending={THREE.AdditiveBlending} // 添加混合模式
+        blending={THREE.AdditiveBlending}
       />
     </points>
   );
@@ -72,34 +72,34 @@ function TorusGeometry() {
 
   return (
     <Float
-      speed={1.5} // 降低浮动速度
+      speed={1.5}
       rotationIntensity={0.3}
       floatIntensity={0.3}
     >
       <mesh ref={meshRef}>
         <torusKnotGeometry 
-          args={[0.7, 0.25, 200, 32, 2, 3]} // 增加分段数，使形状更平滑
+          args={[0.7, 0.25, 200, 32, 2, 3]}
         />
         <MeshTransmissionMaterial
-          samples={32} // 增加采样次数
-          resolution={512} // 提高分辨率
+          samples={32}
+          resolution={512}
           transmission={1}
-          thickness={0.15} // 减小厚度
-          roughness={0.05} // 降低粗糙度
+          thickness={0.15}
+          roughness={0.05}
           metalness={0.1}
           attenuationDistance={8}
           attenuationColor="#ffffff"
-          color="#88ccff" // 添加淡蓝色
-          ior={1.5} // 增加折射率
-          chromaticAberration={0.02} // 减小色差
+          color="#88ccff"
+          ior={1.5}
+          chromaticAberration={0.02}
           distortion={0.4}
           distortionScale={0.3}
           temporalDistortion={0.08}
           clearcoat={0.3}
           transparent={true}
           opacity={0.8}
-          envMapIntensity={1.5} // 增加环境反射
-          backsideThickness={0.3} // 增加背面厚度
+          envMapIntensity={1.5}
+          backsideThickness={0.3}
         />
       </mesh>
     </Float>
@@ -115,14 +115,14 @@ export default function Scene() {
           antialias: true,
           alpha: true,
           toneMapping: THREE.ACESFilmicToneMapping,
-          toneMappingExposure: 1.2, // 略微提高曝光
+          toneMappingExposure: 1.2,
           powerPreference: "high-performance",
           stencil: false,
           depth: true
         }}
-        dpr={[1, 2]} // 适应高DPI屏幕
+        dpr={[1, 2]}
       >
-        <color attach="background" args={['rgb(0, 32, 128)']} /> // 调整背景色
+        <color attach="background" args={['#002FA7']} /> {/* 克莱因蓝 */}
         
         <ambientLight intensity={0.3} />
         <spotLight 
