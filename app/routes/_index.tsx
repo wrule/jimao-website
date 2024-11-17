@@ -84,18 +84,20 @@ export default function Index() {
                 onClick={() => setSelectedArticle(article)}
               >
                 <div 
-                  className={`px-4 transform-gpu ${
+                  className={`px-4 transform-gpu transition-all duration-300 ease-in-out ${
                     selectedArticle?.id === article.id 
                       ? 'text-white border-b border-white pb-2' 
-                      : 'text-white/70 hover:text-white/90 border-b border-transparent pb-2'
+                      : 'text-white/70 hover:text-white/90 border-b border-transparent pb-2 hover:border-white/50'
                   }`}
                   style={{
                     transform: 'translate3d(0,0,0)',
                     backfaceVisibility: 'hidden'
                   }}
                 >
-                  <h3 className="text-lg mb-1">{article.title}</h3>
-                  <time className={`text-sm ${
+                  <h3 className="text-lg mb-1 transition-colors duration-300 ease-in-out">
+                    {article.title}
+                  </h3>
+                  <time className={`text-sm transition-opacity duration-300 ease-in-out ${
                     selectedArticle?.id === article.id 
                       ? 'opacity-80' 
                       : 'opacity-50'
