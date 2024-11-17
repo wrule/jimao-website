@@ -1,127 +1,76 @@
 // app/components/three/Background.tsx
-import { useRef, useMemo } from 'react';
+import { useRef } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { EffectComposer, Bloom } from '@react-three/postprocessing';
-import { Vector3, Color, BackSide } from 'three';
-import { PerspectiveCamera } from '@react-three/drei';
+import * as THREE from 'three';
 
-// 流动的几何体
-function FloatingGeometry() {
-  const mesh = useRef<any>();
-  const uniforms = useMemo(
-    () => ({
-      uTime: { value: 0 },
-      uBaseColor: { value: new Color('#002FA7') },
-      uAccentColor: { value: new Color('#1E90FF') },
-    }),
-    []
-  );
+const KLEIN_BLUE = '#002FA7';
+
+function CrystalGeometry() {
+  const meshRef = useRef<THREE.Mesh>(null);
 
   useFrame((state) => {
-    uniforms.uTime.value = state.clock.getElapsedTime() * 0.3;
-  });
-
-  const vertexShader = `
-    varying vec3 vPosition;
-    varying vec2 vUv;
-    uniform float uTime;
-
-    void main() {
-      vPosition = position;
-      vUv = uv;
-      
-      vec3 pos = position;
-      pos.x += sin(pos.y * 0.5 + uTime) * 0.3;
-      pos.y += cos(pos.x * 0.5 + uTime) * 0.3;
-      pos.z += sin(pos.x * pos.y * 0.2 + uTime) * 0.3;
-
-      gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
-    }
-  `;
-
-  const fragmentShader = `
-    uniform vec3 uBaseColor;
-    uniform vec3 uAccentColor;
-    uniform float uTime;
-    varying vec3 vPosition;
-    varying vec2 vUv;
-
-    void main() {
-      vec3 color = mix(uBaseColor, uAccentColor, 
-        sin(vUv.x * 4.0 + uTime * 0.5) * 0.5 + 0.5);
-      
-      float glow = sin(vUv.x * 10.0 + vUv.y * 10.0 + uTime) * 0.1 + 0.9;
-      color *= glow;
-
-      gl_FragColor = vec4(color, 1.0);
-    }
-  `;
-
-  return (
-    <mesh ref={mesh} position={[0, 0, 0]}>
-      <torusKnotGeometry args={[3, 0.8, 200, 32]} />
-      <shaderMaterial
-        vertexShader={vertexShader}
-        fragmentShader={fragmentShader}
-        uniforms={uniforms}
-      />
-    </mesh>
-  );
-}
-
-// 环境光晕
-function AmbientHalo() {
-  const meshRef = useRef<any>();
-
-  useFrame(({ clock }) => {
     if (meshRef.current) {
-      meshRef.current.rotation.y = clock.getElapsedTime() * 0.1;
-      meshRef.current.rotation.z = clock.getElapsedTime() * 0.05;
+      meshRef.current.rotation.y += 0.005;
+      meshRef.current.rotation.z += 0.003;
     }
   });
 
   return (
-    <mesh ref={meshRef}>
-      <sphereGeometry args={[15, 32, 32]} />
-      <meshBasicMaterial
-        color="#002FA7"
+    <mesh ref={meshRef} position={[0, 0, 0]}>
+      <icosahedronGeometry args={[1.2, 0]} />
+      <meshPhysicalMaterial
+        color={KLEIN_BLUE}
+        metalness={0.2}
+        roughness={0.1}
+        transmission={0.9}
+        thickness={0.5}
         transparent
-        opacity={0.2}
-        side={BackSide}
+        opacity={0.6}
       />
     </mesh>
   );
 }
 
-// 背景粒子
-function BackgroundParticles() {
-  const points = useRef<any>();
-  const particleCount = 1000;
+function Particles() {
+  const particlesRef = useRef<THREE.Points>(null);
+  const particleCount = 200;
+  
+  const positions = new Float32Array(particleCount * 3);
+  const scales = new Float32Array(particleCount);
 
-  const positions = useMemo(() => {
-    const positions = new Float32Array(particleCount * 3);
-    for (let i = 0; i < particleCount; i++) {
-      positions[i * 3] = (Math.random() - 0.5) * 20;
-      positions[i * 3 + 1] = (Math.random() - 0.5) * 20;
-      positions[i * 3 + 2] = (Math.random() - 0.5) * 20;
-    }
-    return positions;
-  }, []);
+  for (let i = 0; i < particleCount; i++) {
+    const theta = Math.random() * Math.PI * 2;
+    const phi = Math.random() * Math.PI * 2;
+    const r = 2 + Math.random() * 3;
 
-  useFrame(({ clock }) => {
-    if (points.current) {
-      points.current.rotation.y = clock.getElapsedTime() * 0.05;
+    positions[i * 3] = r * Math.sin(theta) * Math.cos(phi);
+    positions[i * 3 + 1] = r * Math.sin(theta) * Math.sin(phi);
+    positions[i * 3 + 2] = r * Math.cos(theta);
+    
+    scales[i] = Math.random() * 0.5 + 0.5;
+  }
+
+  useFrame((state) => {
+    if (particlesRef.current) {
+      particlesRef.current.rotation.y += 0.001;
     }
   });
 
   return (
-    <points ref={points}>
+    <points ref={particlesRef}>
       <bufferGeometry>
         <bufferAttribute
           attach="attributes-position"
           count={particleCount}
           array={positions}
           itemSize={3}
+        />
+        <bufferAttribute
+          attach="attributes-scale"
+          count={particleCount}
+          array={scales}
+          itemSize={1}
         />
       </bufferGeometry>
       <pointsMaterial
@@ -135,30 +84,39 @@ function BackgroundParticles() {
   );
 }
 
-// 主背景组件
 export default function Background() {
   return (
-    <div className="fixed inset-0 -z-10">
-      <Canvas>
-        <color attach="background" args={['#002FA7']} />
-        <fog attach="fog" args={['#002FA7', 10, 25]} />
-        
-        <PerspectiveCamera makeDefault position={[0, 0, 10]} fov={60} />
-        
+    <div 
+      className="fixed inset-0 -z-10 bg-[#002FA7]"
+      style={{ 
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100vw',
+        height: '100vh',
+        zIndex: -10,
+      }}
+    >
+      <Canvas
+        camera={{
+          position: [0, 0, 6],
+          fov: 45,
+          near: 0.1,
+          far: 1000,
+        }}
+      >
         <ambientLight intensity={0.4} />
-        <pointLight position={[10, 10, 10]} intensity={0.8} />
-        <pointLight position={[-10, -10, -10]} intensity={0.5} />
-        
-        <FloatingGeometry />
-        <AmbientHalo />
-        <BackgroundParticles />
-        
+        <pointLight position={[10, 10, 10]} intensity={0.6} />
+        <pointLight position={[-10, -10, -10]} intensity={0.4} />
+
+        <CrystalGeometry />
+        <Particles />
+
         <EffectComposer>
           <Bloom
-            intensity={0.7}
-            luminanceThreshold={0.1}
+            intensity={0.4}
+            luminanceThreshold={0.2}
             luminanceSmoothing={0.9}
-            height={300}
           />
         </EffectComposer>
       </Canvas>
