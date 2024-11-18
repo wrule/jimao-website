@@ -50,7 +50,7 @@ export default function Index() {
     <div className="text-white min-h-screen will-change-transform">
       {/* 移动端菜单按钮 */}
       <button
-        className="md:hidden fixed top-4 left-4 z-50 p-2 bg-white/10 rounded-lg"
+        className="md:hidden fixed top-4 left-4 z-50 p-2 bg-white/10 rounded-lg backdrop-blur-md"
         onClick={() => setIsMenuOpen(!isMenuOpen)}
       >
         <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
@@ -64,10 +64,17 @@ export default function Index() {
 
       <div className="max-w-screen-xl mx-auto p-4 md:p-8 flex flex-col md:flex-row gap-8 h-screen">
         {/* 左侧面板 - 在移动端变为抽屉式导航 */}
-        <div className={`fixed md:relative inset-0 bg-black md:bg-transparent z-40 
-          transform transition-transform duration-300 md:transform-none
-          ${isMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
-          w-full md:w-80 flex-shrink-0 flex flex-col will-change-transform`}>
+        <div 
+          className={`fixed md:relative inset-0 z-40 
+            transform transition-transform duration-300 md:transform-none
+            ${isMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+            w-full md:w-80 flex-shrink-0 flex flex-col will-change-transform
+            before:absolute before:inset-0 before:backdrop-blur-xl before:bg-[#002651]/90 
+            before:md:bg-transparent before:-z-10`}
+        >
+          {/* 添加渐变遮罩 */}
+          <div className="absolute inset-0 bg-gradient-to-b from-[#002651]/50 to-[#001529]/50 md:bg-none -z-10"></div>
+
           <div className="p-4 md:p-0">
             {/* 搜索框 */}
             <div className="mb-8 mt-16 md:mt-0">
@@ -159,7 +166,7 @@ export default function Index() {
             </div>
           ) : (
             <div className="w-full flex items-center justify-center text-white/50">
-              Select an article to read
+              Hi, I'm 36000.eth
             </div>
           )}
         </div>
