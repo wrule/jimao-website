@@ -132,13 +132,7 @@ export default function Index() {
                 </div>
               </div>
             </div>
-          ) : (
-            <div className="flex-grow flex items-center justify-center">
-              <div className="text-white/50 text-lg">
-                Select an article to start reading
-              </div>
-            </div>
-          )}
+          ) : (<></>)}
         </div>
       </div>
     </div>
